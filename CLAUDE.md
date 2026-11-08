@@ -24,7 +24,11 @@ Speech detection with Whisper is optional (for example a local mlx-whisper insta
   - re-trim a shot, or insert a new range from the footage;
   - tune per-shot light, captions, transitions and effects;
   - render a new version themselves ("Render version").
-- The UI writes into the episode folder too: `edl.json` (trims, inserts, board picks), `grades.json`,
+- The human can also edit without you, in the UI's Editing tab: reorder and remove shots, change `speed` /
+  `ramp` / `volume` / `zoom` / `x` / `y` / `note`, apply effects. Each change is logged in `instructions.json`
+  as a done note with `"by": "ui"` (read them to know what was changed by hand) and backed up in
+  `edl_history/`; `edl_history/undo.json` is the UI's undo stack (it switches itself off once you edit `edl.json`).
+- The UI writes into the episode folder too: `edl.json` (trims, inserts, board picks, edits), `grades.json`,
   `texts.json`, `transitions.json` and `instructions.json`. Every render, Claude's or the UI's, reads all of them.
 
 ## The edit loop

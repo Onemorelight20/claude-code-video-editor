@@ -1,0 +1,19 @@
+# claude-code-video-editor
+
+> An open-source, local AI video editor for vertical short-form cooking videos (TikTok, Instagram Reels, YouTube Shorts). Claude Code cuts the raw footage by writing an edit decision list (`edl.json`), ffmpeg renders it, and you review each version and leave notes in a browser UI.
+
+claude-code-video-editor is a toolkit of Python scripts, an ffmpeg render pipeline and a local web review UI. The whole edit lives in one JSON file, `edl.json` (shots with source clip, in and out points, speed, crop and sound); `tools/render.py` turns it into a 1080×1920 H.264 MP4 or a 4K master, and the review UI at http://127.0.0.1:8765 collects notes that Claude applies in the next version. It is local-first: ingest, analysis, rendering and review run on your machine, and video files are never uploaded. Requirements: Python 3 with numpy, ffmpeg and ffprobe on PATH, Claude Code, and a browser with WebGL2. Developed and tested on macOS (Apple Silicon) with iPhone footage; Linux needs small changes and Windows is not supported natively. There is no music in the output, and the project is MIT licensed.
+
+## Docs
+
+- [README](https://github.com/Onemorelight20/claude-code-video-editor/blob/main/README.md): Overview, features, quick start, the notes loop, limitations and FAQ.
+- [CLAUDE.md](https://github.com/Onemorelight20/claude-code-video-editor/blob/main/CLAUDE.md): The workflow and rules Claude Code follows in this repo: the edit loop, key commands and the episode folder.
+- [EDL format](https://github.com/Onemorelight20/claude-code-video-editor/blob/main/docs/edl-format.md): Every field of `edl.json` and the other episode files, plus the render sidecar.
+- [Editing playbook](https://github.com/Onemorelight20/claude-code-video-editor/blob/main/docs/editing-playbook.md): How Claude builds a cut: hook, structure, complete actions, timelapses, sound and captions.
+- [Review UI](https://github.com/Onemorelight20/claude-code-video-editor/blob/main/docs/ui.md): The browser review UI tab by tab, the clip editor and keyboard shortcuts.
+- [Architecture](https://github.com/Onemorelight20/claude-code-video-editor/blob/main/docs/architecture.md): Ingest and analysis, the ffmpeg render pipeline, caching, effects, light balance and the server API.
+
+## Optional
+
+- [LICENSE](https://github.com/Onemorelight20/claude-code-video-editor/blob/main/LICENSE): MIT license.
+- [requirements.txt](https://github.com/Onemorelight20/claude-code-video-editor/blob/main/requirements.txt): Python dependencies (numpy) and the tools needed on PATH (ffmpeg, ffprobe; optional mlx-whisper).

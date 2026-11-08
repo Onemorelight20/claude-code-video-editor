@@ -17,6 +17,12 @@ API
   PUT    /api/episodes/<ep>/transitions        {"cuts": {seg_id: {"type", "dur"}}} -> transitions.json
   POST   /api/episodes/<ep>/transition-preview {"file", "seg_id", "type", "dur"} -> 2 s 360p preview from proxies
   POST   /api/episodes/<ep>/segments           {"clip", "in", "out", "mode": "after"|"replace", "target"} -> edl.json
+  POST   /api/episodes/<ep>/board/pick         {"step", "cand"} -> a shot board alternative replaces its shot
+  POST   /api/episodes/<ep>/edit               edit the cut without Claude (backup + undo stack + log):
+           {"op": "set", "id", "props": {speed | ramp | volume | zoom | x | y | note}}
+           {"op": "delete", "id"} | {"op": "order", "ids": [...]} | {"op": "effects", "effects": {global, pushin}}
+           {"op": "undo"} | {"op": "redo"}            ("lang": "uk"|"en" for the log line)
+  POST   /api/episodes/<ep>/current            {"file"} -> renders/current.json (the main version)
   POST   /api/episodes/<ep>/texts/<id>.png?size=1080|2160&hash=<8 hex>   PNG of a caption, drawn by the browser
   GET    /media/<ep>/<proxies|strips|renders>/<file>   media with HTTP Range (video seeking)
   GET    /download/<ep>/<file>                 the same file as an attachment (renders/ or renders/exports/)
@@ -118,6 +124,66 @@ def write_json(p: Path, data):
     tmp = p.with_suffix(".tmp")
     tmp.write_text(json.dumps(data, indent=1, ensure_ascii=False))
     tmp.replace(p)  # atomic: Claude may read the file at any moment
+
+
+# ---------- edits of the cut from the UI: backups + one undo / redo stack per episode ----------
+# edl_history/undo.json = {"undo": [{file, after, what}], "redo": [{file, base, what}]}.
+# `after` / `base` are hashes of edl.json: if Claude (or anything else) changed the file since, undo / redo is off,
+# so a click in the UI never throws away Claude's work.
+def edl_sha(edl):
+    return hashlib.sha1(json.dumps(edl, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:16]
+
+
+def hist_save(d, edl, tag=""):
+    hist = d / "edl_history"
+    hist.mkdir(exist_ok=True)
+    stamp = time.strftime("%Y%m%d-%H%M%S") + f"_{int(time.time() * 1000) % 1000:03d}"
+    f = hist / f"edl_{stamp}{tag}.json"
+    f.write_text(json.dumps(edl, indent=1, ensure_ascii=False))
+    return f.name
+
+
+def undo_doc(d):
+    return read_json(d / "edl_history" / "undo.json", {"undo": [], "redo": []})
+
+
+def undo_put(d, doc):
+    (d / "edl_history").mkdir(exist_ok=True)
+    write_json(d / "edl_history" / "undo.json", doc)
+
+
+def commit_edl(d, before, after, what):
+    """Write edl.json after an edit from the UI and remember how to undo it (call under `lock`)."""
+    name = hist_save(d, before)
+    write_json(d / "edl.json", after)
+    doc = undo_doc(d)
+    doc["undo"] = (doc["undo"] + [{"file": name, "after": edl_sha(after), "what": what}])[-60:]
+    doc["redo"] = []
+    undo_put(d, doc)
+
+
+def undo_state(d):
+    edl = read_json(d / "edl.json", None)
+    if edl is None:
+        return {"undo": None, "redo": None, "stale": False}
+    sha, doc = edl_sha(edl), undo_doc(d)
+    u = doc["undo"][-1] if doc["undo"] else None
+    r = doc["redo"][-1] if doc["redo"] else None
+    return {"undo": u["what"] if u and u["after"] == sha else None,
+            "redo": r["what"] if r and r["base"] == sha else None,
+            "stale": bool(u and u["after"] != sha)}
+
+
+def log_ui(d, text, refs=None):
+    """A line in instructions.json (status done, by ui), so Claude sees what the human changed by hand."""
+    doc = read_json(instructions_path(d), {"items": []})
+    it = {"id": "u" + time.strftime("%m%d%H%M%S") + f"{len(doc['items']):02d}",
+          "created": time.strftime("%Y-%m-%dT%H:%M:%S"), "by": "ui", "anchor": "general",
+          "text": text, "status": "done", "reply": ""}
+    if refs:
+        it["refs"] = refs
+    doc["items"].append(it)
+    write_json(instructions_path(d), doc)
 
 
 def versions_of(d):
@@ -251,11 +317,14 @@ class Handler(BaseHTTPRequestHandler):
                     "grades": light.load_grades(d).get("segments", {}),
                     "texts": read_json(d / "texts.json", {"items": []})["items"],
                     "transitions": read_json(d / "transitions.json", {"cuts": {}}).get("cuts", {}),
-                    "edl_segs": [{k: sg.get(k) for k in ("id", "clip", "in", "out", "zoom", "speed", "ramp", "note")}
+                    "edl_segs": [{k: sg.get(k) for k in ("id", "clip", "in", "out", "zoom", "x", "y", "speed", "ramp",
+                                                         "volume", "motion", "note")}
                                  for sg in read_json(d / "edl.json", {"segments": []})["segments"]
                                  if not sg.get("disabled")],
                     "render_job": dict(renders.get(d.name, {})),
                     "board": read_json(d / "board.json", None),
+                    "undo": undo_state(d),
+                    "edl_effects": (read_json(d / "edl.json", {}) or {}).get("output", {}).get("effects") or {},
                 })
             m = re.fullmatch(r"/media/([^/]+)/([a-z]+)/([^/]+)", path)
             if m and m.group(2) in MEDIA_DIRS and NAME.match(m.group(3)):
@@ -299,7 +368,7 @@ class Handler(BaseHTTPRequestHandler):
         if d:
             return self.save_text_png(d, m.group(2))
         for suffix, fn in (("/transition-preview", self.transition_preview), ("/segments", self.add_segment),
-                           ("/board/pick", self.board_pick)):
+                           ("/board/pick", self.board_pick), ("/edit", self.edit_cut), ("/current", self.set_current)):
             try:
                 d, _ = self.route_ep(path, suffix)
             except FileNotFoundError:
@@ -443,10 +512,8 @@ class Handler(BaseHTTPRequestHandler):
         mode, target = data.get("mode", "after"), data.get("target") or None
         with lock:
             edl = read_json(d / "edl.json")
+            before = json.loads(json.dumps(edl))
             segs = edl["segments"]
-            hist = d / "edl_history"
-            hist.mkdir(exist_ok=True)
-            (hist / f"edl_{time.strftime('%Y%m%d-%H%M%S')}.json").write_text(json.dumps(edl, indent=1, ensure_ascii=False))
             nums = [int(m.group(1)) for s in segs if (m := re.fullmatch(r"s(\d+)", s["id"]))]
             new = {"id": f"s{max(nums, default=0) + 1}", "clip": c["id"], "in": a, "out": b, "speed": 1,
                    "zoom": 1, "x": 0.5, "y": 0.5,
@@ -473,7 +540,7 @@ class Handler(BaseHTTPRequestHandler):
                 segs.insert(pos, new)
                 after = "на початок" if idx is None else f"після «{segs[idx].get('note', segs[idx]['id'])}»"
                 what = f"додано {c['id']} {a:.2f}–{b:.2f} с {after}"
-            write_json(d / "edl.json", edl)
+            commit_edl(d, before, edl, what)
             doc = read_json(instructions_path(d), {"items": []})
             doc["items"].append({"id": "u" + time.strftime("%m%d%H%M%S") + f"{len(doc['items']):02d}",
                                  "created": time.strftime("%Y-%m-%dT%H:%M:%S"), "by": "ui", "anchor": "general",
@@ -506,10 +573,7 @@ class Handler(BaseHTTPRequestHandler):
             idx = next((i for i, sg in enumerate(segs) if sg["id"] == step["seg_id"]), None)
             if idx is None:
                 return self.send_json({"error": "цього кадру вже немає в монтажі"}, 409)
-            hist = d / "edl_history"
-            hist.mkdir(exist_ok=True)
-            stamp = time.strftime('%Y%m%d-%H%M%S') + f"_{int(time.time() * 1000) % 1000:03d}"  # several picks a second
-            (hist / f"edl_{stamp}.json").write_text(json.dumps(edl, indent=1, ensure_ascii=False))
+            before = json.loads(json.dumps(edl))
             look = ("clip", "in", "out", "speed", "zoom", "x", "y", "volume", "audio_mute", "ramp", "motion")
             new = {key: v for key, v in segs[idx].items() if key not in look}
             new.update({"clip": c["id"], "in": a, "out": b, "speed": cand.get("speed", 1), "zoom": cand.get("zoom", 1),
@@ -518,10 +582,10 @@ class Handler(BaseHTTPRequestHandler):
                 if key in cand:
                     new[key] = cand[key]
             segs[idx] = new
-            write_json(d / "edl.json", edl)
+            what = f"«{step.get('title', step['seg_id'])}» — варіант {k + 1}: {c['id']} {a:.2f}–{b:.2f} с"
+            commit_edl(d, before, edl, what)
             step["pick"] = k
             write_json(bp, board)
-            what = f"«{step.get('title', step['seg_id'])}» — варіант {k + 1}: {c['id']} {a:.2f}–{b:.2f} с"
             doc = read_json(instructions_path(d), {"items": []})
             doc["items"].append({"id": "u" + time.strftime("%m%d%H%M%S") + f"{len(doc['items']):02d}",
                                  "created": time.strftime("%Y-%m-%dT%H:%M:%S"), "by": "ui", "anchor": "general",
@@ -530,6 +594,131 @@ class Handler(BaseHTTPRequestHandler):
                                  "refs": [{"clip": c["id"], "t": a, "t2": b}]})
             write_json(instructions_path(d), doc)
         self.send_json({"ok": True, "segment": new, "what": what})
+
+    def edit_cut(self, d):
+        """Edit the cut without Claude: shot properties, delete, reorder, effects, undo / redo."""
+        data = self.body_json() or {}
+        op, en = data.get("op"), data.get("lang") == "en"
+        L = lambda uk, eng: eng if en else uk
+        with lock:
+            if op in ("undo", "redo"):
+                return self.undo_redo(d, op, L)
+            edl = read_json(d / "edl.json")
+            before = json.loads(json.dumps(edl))
+            segs = edl["segments"]
+            active = [sg for sg in segs if not sg.get("disabled")]
+            idx = next((i for i, sg in enumerate(segs) if sg["id"] == data.get("id")), None)
+            seg = segs[idx] if idx is not None else None
+            label = lambda sg: re.sub(r"\s*\((?:вибір|межі) користувача[^)]*\)", "", sg.get("note") or "").strip() or sg["id"]
+            num = lambda sg: f"#{active.index(sg) + 1} «{label(sg)}»" if sg in active else sg["id"]
+            if op == "set":
+                if not seg:
+                    return self.send_json({"error": L("кадру вже немає в монтажі", "this shot is no longer in the edit")}, 409)
+                props, parts = data.get("props") or {}, []
+                try:
+                    if "speed" in props:
+                        v = round(min(4.0, max(0.25, float(props["speed"]))), 3)
+                        seg["speed"] = v
+                        seg.pop("ramp", None)
+                        parts.append(L(f"швидкість {v:g}×", f"speed {v:g}×"))
+                    if "ramp" in props:
+                        rp = props["ramp"]
+                        if rp:
+                            sp = round(min(40.0, max(2.0, float(rp.get("speed", 8)))), 2)
+                            seg["ramp"] = {"speed": sp, "hold": 0.4, "ease": 0.6, "blend": max(1, round(sp / 4))}
+                            seg["speed"] = 1
+                            parts.append(L(f"таймлапс ×{sp:g}", f"timelapse ×{sp:g}"))
+                        else:
+                            seg.pop("ramp", None)
+                            parts.append(L("без таймлапсу", "no timelapse"))
+                    if "volume" in props:
+                        v = round(min(1.0, max(0.0, float(props["volume"]))), 2)
+                        seg["volume"] = v
+                        parts.append(L("без звуку", "muted") if v == 0 else L(f"звук {round(v * 100)}%", f"sound {round(v * 100)}%"))
+                    for k in ("zoom", "x", "y"):
+                        if k in props:
+                            lo, hi = (1.0, 3.0) if k == "zoom" else (0.0, 1.0)
+                            seg[k] = round(min(hi, max(lo, float(props[k]))), 3)
+                    if any(k in props for k in ("zoom", "x", "y")):
+                        parts.append(L(f"кадрування ×{float(seg.get('zoom', 1)):.2f}", f"crop ×{float(seg.get('zoom', 1)):.2f}"))
+                    if "note" in props:
+                        seg["note"] = str(props["note"]).strip()[:80] or seg["id"]
+                        parts.append(L("нова назва", "renamed"))
+                except (TypeError, ValueError, AttributeError):
+                    return self.send_json({"error": L("неправильні значення", "invalid values")}, 400)
+                if not parts:
+                    return self.send_json({"error": L("нічого не змінено", "nothing changed")}, 400)
+                what = f"{num(seg)}: " + ", ".join(parts)
+            elif op == "delete":
+                if not seg:
+                    return self.send_json({"error": L("кадру вже немає в монтажі", "this shot is no longer in the edit")}, 409)
+                if len(active) <= 1:
+                    return self.send_json({"error": L("це останній кадр", "this is the last shot")}, 400)
+                what = L(f"прибрано кадр {num(seg)}", f"removed shot {num(seg)}")
+                segs.pop(idx)
+            elif op == "order":
+                ids = [str(x) for x in data.get("ids") or []]
+                if sorted(ids) != sorted(sg["id"] for sg in active):
+                    return self.send_json({"error": L("монтаж змінився, онови сторінку", "the edit changed, reload the page")}, 409)
+                by_id = {sg["id"]: sg for sg in active}
+                moved = [i for i, (a, b) in enumerate(zip(ids, [sg["id"] for sg in active])) if a != b]
+                edl["segments"] = [by_id[i] for i in ids] + [sg for sg in segs if sg.get("disabled")]
+                first = by_id[ids[moved[0]]] if moved else None
+                what = L(f"змінено порядок кадрів (з #{moved[0] + 1})", f"reordered shots (from #{moved[0] + 1})") if first else ""
+                if not what:
+                    return self.send_json({"ok": True, "unchanged": True})
+            elif op == "effects":
+                fx = data.get("effects") or {}
+                edl.setdefault("output", {})["effects"] = fx.get("global") or {}
+                push = fx.get("pushin")
+                for sg in segs:
+                    sg.pop("motion", None)
+                    if push and (push.get("scope") == "all" or sg["id"] == push.get("seg_id")):
+                        sg["motion"] = {"pushin": round(float(push.get("strength", 1)), 2)}
+                what = L("ефекти застосовано з інтерфейсу", "effects applied from the UI")
+            else:
+                return self.send_json({"error": "unknown op"}, 400)
+            commit_edl(d, before, edl, what)
+            log_ui(d, L("Змінено вручну: ", "Edited by hand: ") + what)
+        self.send_json({"ok": True, "what": what, "undo": undo_state(d)})
+
+    def undo_redo(self, d, op, L):
+        """Call under `lock`. Only when edl.json is exactly as the UI left it (no edits by Claude since)."""
+        cur = read_json(d / "edl.json")
+        sha, doc = edl_sha(cur), undo_doc(d)
+        hist = d / "edl_history"
+        if op == "undo":
+            u = doc["undo"][-1] if doc["undo"] else None
+            if not u or u["after"] != sha:
+                return self.send_json({"error": L("нема чого скасувати", "nothing to undo")}, 409)
+            prev = read_json(hist / u["file"])
+            redo_file = hist_save(d, cur, "_redo")
+            write_json(d / "edl.json", prev)
+            doc["undo"].pop()
+            doc["redo"].append({"file": redo_file, "base": edl_sha(prev), "what": u["what"]})
+            what = L("скасовано: ", "undone: ") + u["what"]
+        else:
+            r = doc["redo"][-1] if doc["redo"] else None
+            if not r or r["base"] != sha:
+                return self.send_json({"error": L("нема чого повторити", "nothing to redo")}, 409)
+            state = read_json(hist / r["file"])
+            undo_file = hist_save(d, cur)
+            write_json(d / "edl.json", state)
+            doc["redo"].pop()
+            doc["undo"].append({"file": undo_file, "after": edl_sha(state), "what": r["what"]})
+            what = L("повторено: ", "redone: ") + r["what"]
+        undo_put(d, doc)
+        log_ui(d, L("Змінено вручну: ", "Edited by hand: ") + what)
+        return self.send_json({"ok": True, "what": what, "undo": undo_state(d)})
+
+    def set_current(self, d):
+        """The version the UI opens by default (renders/current.json)."""
+        f = str((self.body_json() or {}).get("file", ""))
+        if not NAME.match(f) or not (d / "renders" / f).exists():
+            return self.send_json({"error": "not found"}, 404)
+        with lock:
+            write_json(d / "renders" / "current.json", {"file": f, "why": "обрано в інтерфейсі / picked in the UI"})
+        self.send_json({"ok": True, "current": f})
 
     def save_grade(self, d, sid):
         data = self.body_json() or {}

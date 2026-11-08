@@ -18,6 +18,7 @@
     <select id="episode" class="titleSelect" title="Відео"></select>
     <select id="version" class="pillSelect" title="Версія монтажу. Клавіша V — перемкнути на попередню переглянуту (той самий момент)"></select>
     <button id="oldVer" class="oldVer hidden" title="Відкрита не основна версія. Клік — повернутись до основної"></button>
+    <button id="makeMain" class="makeMain hidden" title="Цю версію UI відкриватиме за замовчуванням">Зробити основною</button>
   </div>
   <div id="versionNote"></div>
   <div class="spacer"></div>
@@ -103,6 +104,7 @@
   <section id="notesPane">
     <div class="tabs2" id="sideTabs" role="tablist">
       <button data-tab="notes" class="on" role="tab" aria-selected="true">Вказівки <span id="notesBadge" class="tabBadge hidden"></span></button>
+      <button data-tab="edit" role="tab" aria-selected="false" title="Змінити монтаж без Claude: порядок, швидкість, звук, кадрування">Монтаж</button>
       <button data-tab="board" role="tab" aria-selected="false">Кадри</button>
       <button data-tab="light" role="tab" aria-selected="false">Світло</button>
       <button data-tab="text" role="tab" aria-selected="false">Текст</button>
@@ -231,12 +233,14 @@
         <div id="fxSummary" class="small"></div>
         <textarea id="fxNote" rows="2" placeholder="Коментар (необов'язково): напр. «світіння тільки на фінальній тарілці»"></textarea>
         <div class="row">
-          <button id="fxSend" class="primary">Надіслати Claude: зробити версію з цими ефектами</button>
+          <button id="fxApply" class="primary" title="Записати ці ефекти в монтаж; у відео — після «Зробити версію»">Застосувати до відео</button>
+          <button id="fxSend">Надіслати Claude: зробити версію з цими ефектами</button>
           <span id="fxStatus" class="muted small"></span>
         </div>
       </div>
     </div>
     <div id="tabBoard" class="hidden"></div>
+    <div id="tabEdit" class="hidden"></div>
     <div id="tabNotes">
     <div id="applyStrip" class="applyStrip hidden">
       <span id="applyText"></span>
@@ -416,5 +420,6 @@
 <script src="/app.js"></script>
 <script src="/studio.js"></script>
 <script src="/board.js"></script>
+<script src="/edit.js"></script>
 </body>
 </html>

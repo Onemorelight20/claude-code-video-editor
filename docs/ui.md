@@ -88,6 +88,29 @@ The main channel to Claude. Everything here is stored in `instructions.json`.
   ("apply my notes").
 - The tab shows a counter of new notes and questions.
 
+### Editing (Монтаж): change the cut without Claude
+
+The draft edit, straight from `edl.json`. The player keeps showing the last render; every change here is saved
+at once and shows up in the video after **Render version**. A honey dot marks shots that differ from the video.
+
+- **Drag** a shot by its `⋮⋮` handle to reorder, or use **↑ / ↓**. **▶** on the thumbnail previews the shot
+  with its crop and speed.
+- Click a shot to open its properties:
+  - **Name** (the label in the UI and in notes).
+  - **Speed**: 0.5× (smooth slow motion with interpolated frames), 1×, 1.5×, 2×, or a timelapse ×8 / ×20
+    (normal start and end of the action, fast middle, frame blending).
+  - **Sound**: volume slider and mute.
+  - **Crop**: zoom slider, then drag the 9:16 frame on the thumbnail to pick the part of the picture.
+  - **Trim** opens the clip editor on this shot, **Insert after** opens it to add a new range right after it
+    (pick another clip in the library on the left if you like), **Remove** drops the shot.
+- **Undo / Redo** (`⌘Z` / `⇧⌘Z`) step through your edits. They are disabled as soon as something outside the
+  UI (Claude) has changed `edl.json`, so a click never throws away Claude's work.
+- **Preview draft** plays the whole draft from the footage proxies, shot after shot, with crop and speed and
+  without sound, so you can check an order or a speed before rendering.
+- Every change is backed up in `edl_history/` and logged in `instructions.json` as a done note (`by: "ui"`),
+  so Claude knows what you changed by hand. A caption anchored to a removed shot is skipped by the render
+  and comes back if the shot does.
+
 ### Shots (Кадри)
 
 The shot board from `board.json`, if Claude made one. For every shot of the edit: Claude's pick (first) and
@@ -151,9 +174,10 @@ A live WebGL preview over the video. The final render uses the same colour table
 - **Light**: soft glow, diffusion, light leaks, vignette. **Texture**: film grain, sharpen.
   **Motion**: slow push-in, on all shots or only the current one.
 - **Hold: before / after** (or hold `B`), **Reset all**.
-- **Send to Claude: render a version with these effects** creates a note with the settings attached.
-  Effects are not written to `edl.json` directly: Claude applies them with
-  `tools/instructions.py apply-effects` and renders.
+- **Apply to the video** writes the effects into `edl.json` (`output.effects` and per-shot push-in) right
+  away; they show up after **Render version**. With nothing selected it removes the effects.
+- **Send to Claude: render a version with these effects** creates a note with the settings attached instead;
+  Claude applies them with `tools/instructions.py apply-effects` and renders.
 
 ## Footage panel and clip editor
 
@@ -210,6 +234,8 @@ Press `?` in the UI for the same list.
 | `M` | show / hide the footage panel |
 | `Esc` | close a window, leave a text field |
 | `?` | shortcuts window |
+| `⌘Z` / `⇧⌘Z` | undo / redo an edit made in the UI |
+| `Delete` | remove the selected shot (Editing tab) |
 
 In the clip editor:
 

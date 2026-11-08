@@ -720,11 +720,12 @@ function pendingInfo() {
     if (want.type !== have.type || (want.type !== "cut" && Math.abs(want.dur - have.dur) > 0.04)) trans.push({ n: i + 1, want });
   });
   const edl = edlDiff();
-  return { lightSegs, caps: live.length, capsChanged, trans, edl };
+  const fx = !!S.V && fxKey(ST2.edlFx) !== fxKey((S.V.output || {}).effects);
+  return { lightSegs, caps: live.length, capsChanged, trans, edl, fx };
 }
 function markPending() {
   const p = pendingInfo();
-  const n = p.lightSegs.length + p.trans.length + (p.capsChanged ? 1 : 0) + (p.edl.changed ? Math.max(1, p.edl.n || 0) : 0);
+  const n = p.lightSegs.length + p.trans.length + (p.capsChanged ? 1 : 0) + (p.edl.changed ? Math.max(1, p.edl.n || 0) : 0) + (p.fx ? 1 : 0);
   const any = n > 0;
   const btn = $("#mkVersion");
   btn.classList.toggle("pending", any);
@@ -742,6 +743,7 @@ function markPending() {
 function pendingText(p) {
   const parts = [];
   if (p.edl.changed) parts.push(t("Монтаж: {x}", { x: p.edl.text }));
+  if (p.fx) parts.push(t("Ефекти змінено"));
   if (p.lightSegs.length) parts.push(t("Світло змінено вручну: {list}", { list: p.lightSegs.map((n) => "#" + n).join(", ") }));
   if (p.trans.length) parts.push(t("Переходи: {list}", { list: p.trans.map((x) => `#${x.n} ${TRNAME[x.want.type] || x.want.type}${x.want.type !== "cut" ? " " + x.want.dur.toFixed(1) + " " + t("с") : ""}`).join(", ") }));
   if (p.capsChanged) parts.push(p.caps ? t("Написи: {n}", { n: p.caps }) : t("Написи прибрано"));
@@ -814,6 +816,7 @@ window.onEpisodeData = (d, initial) => {
   }
   if (initial || !ST2.trSaveTimer) ST2.trans = d.transitions || {};
   ST2.edlSegs = d.edl_segs || [];
+  ST2.edlFx = d.edl_effects || {};
   if (S.sideTab === "light") renderLightPanel();
   renderJobStatus();
   renderTrans();
@@ -1020,8 +1023,10 @@ function renderTransMarks() {
 }
 
 // ================================================================= montage changes not yet rendered
+const fxKey = (o) => JSON.stringify(o || {}, Object.keys(o || {}).sort());
 function edlDiff() {
-  const key = (x) => `${x.id}|${x.clip}|${(+x.in).toFixed(2)}|${(+x.out).toFixed(2)}|${(+(x.speed ?? 1)).toFixed(3)}|${x.ramp ? +x.ramp.speed : 0}`;
+  const key = (x) => `${x.id}|${x.clip}|${(+x.in).toFixed(2)}|${(+x.out).toFixed(2)}|${(+(x.speed ?? 1)).toFixed(3)}|${x.ramp ? +x.ramp.speed : 0}`
+    + `|${(+(x.zoom ?? 1)).toFixed(3)}|${(+(x.x ?? 0.5)).toFixed(3)}|${(+(x.y ?? 0.5)).toFixed(3)}|${(+(x.volume ?? 1)).toFixed(2)}|${x.motion ? 1 : 0}`;
   const have = segs().map(key);
   const want = (ST2.edlSegs || []).map(key);
   if (!ST2.edlSegs.length || have.join() === want.join()) return { changed: false, text: "", ids: [], n: 0 };
@@ -1032,6 +1037,9 @@ function edlDiff() {
     if (!h) parts.push(`+ ${x.clip} ${(+x.in).toFixed(2)}–${(+x.out).toFixed(2)}`);
     else if (h.clip !== x.clip || Math.abs(h.in - x.in) > 0.004 || Math.abs(h.out - x.out) > 0.004) {
       parts.push(`«${noteLabel(x.note) || x.id}» → ${x.clip} ${(+x.in).toFixed(2)}–${(+x.out).toFixed(2)}`);
+      ids.push(x.id);
+    } else if (key(h) !== key(x)) {
+      parts.push(t("«{n}»: змінено швидкість, звук чи кадрування", { n: noteLabel(x.note) || x.id }));
       ids.push(x.id);
     }
   }
@@ -1064,8 +1072,16 @@ window.editShot = (i) => {
 // another clip picked in the library beside the editor: if a shot is being replaced (✎ on the timeline),
 // keep that target, so the shot can be replaced with a piece of a different clip
 window.switchClip = (id, at) => {
-  const keep = $("#mMode").value === "replace" ? M.edit : null;
+  const mode = $("#mMode").value, where = $("#mWhere").value, status = $("#mAddStatus").textContent;
+  const keep = mode === "replace" ? M.edit : null;
   openClip(id, at);
+  if (mode === "after") {   // inserting at a chosen place: stay there
+    $("#mMode").value = "after";
+    fillWhere();
+    if ([...$("#mWhere").options].some((o) => o.value === where)) $("#mWhere").value = where;
+    $("#mAddStatus").textContent = status;
+    return;
+  }
   if (!keep) return;
   M.edit = keep;
   $("#mMode").value = "replace";

@@ -211,6 +211,7 @@ function renderOldVer() {
   const b = $("#oldVer"), cur = S.versions.find((v) => v.file === S.current);
   const old = !!(S.V && cur && S.V.file !== cur.file);
   b.classList.toggle("hidden", !old);
+  $("#makeMain").classList.toggle("hidden", !(S.V && S.V.file !== S.current && S.V.version != null));
   if (old) b.textContent = t("не основна · до {v}", { v: vLabel(cur) });
 }
 $("#oldVer").onclick = () => { if (S.current) setVersion(S.current); };
@@ -875,7 +876,7 @@ $$("#sideTabs button").forEach((b) => (b.onclick = () => setSideTab(b.dataset.ta
 function setSideTab(tab) {
   S.sideTab = tab;
   $$("#sideTabs button").forEach((x) => { x.classList.toggle("on", x.dataset.tab === tab); x.setAttribute("aria-selected", x.dataset.tab === tab ? "true" : "false"); });
-  for (const [t, id] of [["notes", "#tabNotes"], ["board", "#tabBoard"], ["light", "#tabLight"], ["text", "#tabText"], ["trans", "#tabTrans"], ["fx", "#tabFx"]]) {
+  for (const [t, id] of [["notes", "#tabNotes"], ["edit", "#tabEdit"], ["board", "#tabBoard"], ["light", "#tabLight"], ["text", "#tabText"], ["trans", "#tabTrans"], ["fx", "#tabFx"]]) {
     $(id).classList.toggle("hidden", t !== tab);
   }
   if (tab === "fx") fxInit().then(() => { fxRender(); fxThumbs(); });
@@ -1265,6 +1266,10 @@ function syncFxUI() {
   $("#fxSummary").innerHTML = txt ? t("Вибрано: <b></b>") : `<span class="muted">${t("Нічого не вибрано. Почни з готового набору або кольору.")}</span>`;
   if (txt) $("#fxSummary b").textContent = txt;
   $("#fxSend").disabled = !txt;
+  // «Застосувати»: also with nothing chosen, if the edit has effects (that clears them)
+  const has = ST2 && ST2.edlFx && Object.keys(ST2.edlFx).length;
+  $("#fxApply").disabled = !txt && !has;
+  $("#fxApply").textContent = !txt && has ? t("Прибрати ефекти з відео") : t("Застосувати до відео");
 }
 // effects already baked into the version on screen
 function fxOnVersion() {

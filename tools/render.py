@@ -369,6 +369,8 @@ def place_texts(items, segs, fps):
     for it in items:
         if it.get("hidden") or str(it.get("text", "")).strip() in PLACEHOLDERS or not it.get("hash"):
             continue  # empty or still the UI placeholder: a draft, never burned in
+        if it.get("seg_id") and it["seg_id"] not in starts:
+            continue  # its shot was removed from the edit: the caption goes with it (comes back if the shot does)
         a = starts.get(it.get("seg_id"))
         a = a + float(it.get("offset", 0)) if a is not None else float(it.get("start", 0))
         e = ends.get(it.get("end_seg"))   # "until the end of that shot": follows the shots when they are re-cut

@@ -4,7 +4,7 @@
 
 You shoot the recipe, drop the clips in, and ask Claude for a cut. Claude picks the shots, trims them on completed actions, adds speed ramps and timelapses, and renders a 1080×1920 MP4. You watch it, pin notes to shots ("start this one a second later", "use the other take"), and Claude applies them in the next version. Ingest, rendering and review all run on your machine, and your video files are never uploaded.
 
-<!-- Demo GIF placeholder: docs/demo.gif, the review UI (player, notes, shot board) recorded with non-personal sample footage. -->
+![claude-code-video-editor: Claude Code edits vertical videos, you review in a local browser UI](docs/social-preview.png)
 
 Not affiliated with Anthropic, TikTok, Meta or Google.
 
@@ -47,6 +47,10 @@ footage (zip / folder) -> new_episode.py -> proxies, strips, analysis
 - Optional: with a local Whisper install (for example `mlx-whisper` on Apple Silicon), checks clips for speech and mutes it.
 
 ### Review UI
+
+- **Edit without Claude**: reorder shots by drag and drop, remove them, change speed (slow motion, 1.5×, 2×,
+  timelapse), volume and crop, insert new ranges from the footage, apply effects, undo / redo, and preview the
+  draft edit straight from the footage before rendering.
 
 - 9:16 player with note markers, frame stepping and 0.5× / 0.25× playback, plus a docked, zoomable timeline with thumbnails.
 - Notes anchored to a shot, a moment or the whole video, with status (new, question, done) and Claude's reply under each.
