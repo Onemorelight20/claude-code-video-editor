@@ -1,6 +1,6 @@
-# REPO: AI video editor for TikTok, Reels and Shorts, driven by Claude Code
+# claude-code-video-editor: AI video editor for TikTok, Reels and Shorts, driven by Claude Code
 
-**REPO is an open-source, local AI video editor for vertical short-form cooking videos (TikTok, Instagram Reels, YouTube Shorts): Claude Code cuts your raw footage by writing an edit decision list, ffmpeg renders it, and you review the result and leave notes in a browser UI.**
+**claude-code-video-editor is an open-source, local AI video editor for vertical short-form cooking videos (TikTok, Instagram Reels, YouTube Shorts): Claude Code cuts your raw footage by writing an edit decision list, ffmpeg renders it, and you review the result and leave notes in a browser UI.**
 
 You shoot the recipe, drop the clips in, and ask Claude for a cut. Claude picks the shots, trims them on completed actions, adds speed ramps and timelapses, and renders a 1080×1920 MP4. You watch it, pin notes to shots ("start this one a second later", "use the other take"), and Claude applies them in the next version. Ingest, rendering and review all run on your machine, and your video files are never uploaded.
 
@@ -10,7 +10,7 @@ Not affiliated with Anthropic, TikTok, Meta or Google.
 
 ## What is it?
 
-REPO is a toolkit of Python scripts, an ffmpeg render pipeline and a local web app that together let Claude Code act as the editor of a short vertical video. The edit lives in one JSON file, `edl.json` (an edit decision list): a list of shots, each with a source clip, in and out points, speed, crop and sound. Claude edits that file; `tools/render.py` turns it into a finished MP4; the review UI at `http://127.0.0.1:8765` shows every rendered version and collects your feedback.
+claude-code-video-editor is a toolkit of Python scripts, an ffmpeg render pipeline and a local web app that together let Claude Code act as the editor of a short vertical video. The edit lives in one JSON file, `edl.json` (an edit decision list): a list of shots, each with a source clip, in and out points, speed, crop and sound. Claude edits that file; `tools/render.py` turns it into a finished MP4; the review UI at `http://127.0.0.1:8765` shows every rendered version and collects your feedback.
 
 ## Who is it for?
 
@@ -100,8 +100,8 @@ footage (zip / folder) -> new_episode.py -> proxies, strips, analysis
 ## Quick start
 
 ```sh
-git clone https://github.com/OWNER/REPO.git
-cd REPO
+git clone https://github.com/Onemorelight20/claude-code-video-editor.git
+cd claude-code-video-editor
 brew install ffmpeg                                 # provides ffmpeg and ffprobe
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
@@ -152,7 +152,7 @@ Light, captions, transitions, shot swaps and trims you make in the UI are saved 
 
 ## When to use it (and when not)
 
-| | REPO | CapCut-style manual editor |
+| | claude-code-video-editor | CapCut-style manual editor |
 | --- | --- | --- |
 | Who makes the cuts | Claude, from your brief and notes | You, clip by clip |
 | Your part | Brief, review, notes, fine-tuning | All of the editing |
@@ -177,7 +177,7 @@ Light, captions, transitions, shot swaps and trims you make in the UI are saved 
 
 ### Can Claude Code edit videos?
 
-Yes, with tools like these. Claude Code cannot watch video directly, but it can read contact-sheet images and motion metrics, write an edit decision list, and run ffmpeg through `tools/render.py`, which is how REPO lets it cut a complete vertical video.
+Yes, with tools like these. Claude Code cannot watch video directly, but it can read contact-sheet images and motion metrics, write an edit decision list, and run ffmpeg through `tools/render.py`, which is how claude-code-video-editor lets it cut a complete vertical video.
 
 ### How do I edit TikTok videos with AI locally?
 
@@ -213,7 +213,7 @@ Yes. Run `python3 tools/server.py --lan` and open the printed address on a phone
 
 ### What is an edit decision list (EDL)?
 
-An edit decision list is a description of an edit as data: which source clip each shot comes from, where it starts and ends, and how it is played. In REPO it is `edl.json`, and the rendered video is always rebuilt from it.
+An edit decision list is a description of an edit as data: which source clip each shot comes from, where it starts and ends, and how it is played. In claude-code-video-editor it is `edl.json`, and the rendered video is always rebuilt from it.
 
 ## Project structure
 
