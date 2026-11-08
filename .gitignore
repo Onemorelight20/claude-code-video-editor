@@ -1,0 +1,29 @@
+# Your footage, edits, renders and notes stay on your machine.
+# Each episode folder holds source links, proxies, renders and per-video notes:
+# none of it belongs in the repository.
+episodes/*
+!episodes/.gitkeep
+
+# Reference videos (other people's work, or your own published videos)
+reference/*
+!reference/.gitkeep
+
+# Private, per-user context for Claude (episode notes, personal preferences)
+CONTEXT.md
+CLAUDE.local.md
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Logs and scratch
+*.log
+scratch/

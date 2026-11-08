@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Монтаж</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400;1,7..72,500&family=Martian+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,400;0,700;0,900;1,700&family=Unbounded:wght@400;700;900&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=Yeseva+One&family=Comfortaa:wght@400;700&family=Caveat:wght@400;700&family=Marck+Script&family=Bad+Script&family=Lobster&family=Pacifico&family=Amatic+SC:wght@400;700&family=Neucha&family=Rubik:ital,wght@0,400;0,700;0,900;1,700&family=Great+Vibes&display=swap">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <button id="libToggle" class="icon" title="Показати / сховати матеріал (M)" aria-pressed="true"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="2.5"/><path d="M9.5 4.5v15"/></svg></button>
+  <div class="hgroup">
+    <select id="episode" class="titleSelect" title="Відео"></select>
+    <select id="version" class="pillSelect" title="Версія монтажу. Клавіша V — перемкнути на попередню переглянуту (той самий момент)"></select>
+    <button id="oldVer" class="oldVer hidden" title="Відкрита не основна версія. Клік — повернутись до основної"></button>
+  </div>
+  <div id="versionNote"></div>
+  <div class="spacer"></div>
+  <span id="mkStatus" class="muted small"></span>
+  <button id="mkVersion" class="ghost" title="Нова версія з поточним світлом, написами й переходами (монтаж той самий)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 11-2.2-5.3M19.5 4.5v4.6h-4.6"/></svg><span>Зробити версію</span></button>
+  <div class="dl">
+    <button id="dlBtn" class="primary" title="Завантажити цю версію"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4.5v10.5M7.5 10.5L12 15l4.5-4.5M5.5 19.5h13"/></svg><span>Завантажити</span></button>
+    <div id="dlMenu" class="menu hidden"></div>
+  </div>
+  <div id="langSwitch" class="seg3 langSw" role="group" aria-label="Мова інтерфейсу"><button type="button" data-lang="uk" lang="uk" title="Українська" aria-pressed="false">UK</button><button type="button" data-lang="en" lang="en" title="English" aria-pressed="false">EN</button></div>
+  <button id="helpBtn" class="icon" title="Клавіші й підказки (?)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.6a2.5 2.5 0 114.1 1.9c-.9.7-1.7 1.2-1.7 2.4"/><path class="f" d="M11 16.4h2v2h-2z"/></svg></button>
+</header>
+
+<div id="newVersion" class="banner hidden" role="status">
+  <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.3l2.4 2.4 4.6-5"/></svg>
+  <span>Готова нова версія <b id="newVersionName"></b></span>
+  <button id="newVersionBtn" class="primary">Показати</button>
+  <button id="newVersionX" class="icon" title="Закрити"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button>
+</div>
+
+<aside id="browserPane" class="panel">
+  <div class="panelHead">
+    <h2>Матеріал</h2> <span class="muted small" id="clipCount"></span>
+    <span class="spacer"></span>
+    <button id="libClose" class="icon" title="Сховати панель (M)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg></button>
+  </div>
+  <div class="browserTools">
+    <div class="searchBox"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l4.5 4.5"/></svg>
+      <input id="search" type="search" placeholder="Пошук: крем, IMG_0123…" spellcheck="false"
+        title="Шукає в назвах кліпів, нотатках і етапах. Наведи на кліп, щоб гортати; клік відкриває редактор уривка."></div>
+    <label class="check small"><input type="checkbox" id="unusedOnly"> лише ті, що не в монтажі</label>
+  </div>
+  <div id="browser"></div>
+</aside>
+
+<main>
+  <section id="playerPane">
+    <div class="players">
+      <div class="playerCol">
+        <div class="frame916" id="frame">
+          <video id="video" playsinline preload="auto"></video>
+          <canvas id="fxCanvas" class="hidden"></canvas>
+          <canvas id="txtCanvas"></canvas>
+          <div id="fxBadge" class="hidden">ефекти · прев'ю</div>
+          <video id="trPreview" class="hidden" playsinline muted loop></video>
+          <div id="trPreviewLbl" class="hidden">прев'ю переходу · клік — закрити</div>
+          <button id="bigPlay" title="Грати (Пробіл)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6.5v11l9-5.5z"/></svg></button>
+        </div>
+        <div id="scrub" title="Перетягни, щоб перемотати">
+          <div id="scrubSegs"></div>
+          <div id="scrubFill"></div>
+          <div id="scrubMarks"></div>
+          <div id="scrubThumb"></div>
+        </div>
+        <div class="controls">
+          <button id="toStart" class="icon" title="Дивитись з початку (Home)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14" /><path class="f" d="M19 5.5v13L9 12z"/></svg></button>
+          <button id="playBtn" class="icon play" title="Пауза / грати (Пробіл)"><svg class="ic i-play" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M8 5.2v13.6L19 12z"/></svg><svg class="ic i-pause" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M7 5h3.6v14H7zM13.4 5H17v14h-3.6z"/></svg></button>
+          <button id="frameBack" class="icon" title="На 1/30 с назад (←) · ⇧← попередній кадр монтажу"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg></button>
+          <button id="frameFwd" class="icon" title="На 1/30 с вперед (→) · ⇧→ наступний кадр монтажу"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6l6 6-6 6"/></svg></button>
+          <span id="time" class="mono">0.00 / 0.00</span>
+          <span class="spacer"></span>
+          <button id="speedBtn" class="icon txt" title="Швидкість">1×</button>
+          <button id="muteBtn" class="icon" title="Звук"><svg class="ic i-sound" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9.2a4 4 0 010 5.6M18 6.8a7.5 7.5 0 010 10.4"/></svg><svg class="ic i-muted" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9.5l5 5M20.5 9.5l-5 5"/></svg></button>
+          <button id="loopBtn" class="icon" title="Повтор"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M16.5 3.5l3 3-3 3M5 11V9.5a3 3 0 013-3h11.5M7.5 20.5l-3-3 3-3M19 13v1.5a3 3 0 01-3 3H4.5"/></svg></button>
+          <button id="fullBtn" class="icon" title="На весь екран (F)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 9V4.5H9M15 4.5h4.5V9M19.5 15v4.5H15M9 19.5H4.5V15"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="notesPane">
+    <div class="tabs2" id="sideTabs" role="tablist">
+      <button data-tab="notes" class="on" role="tab" aria-selected="true">Вказівки <span id="notesBadge" class="tabBadge hidden"></span></button>
+      <button data-tab="board" role="tab" aria-selected="false">Кадри</button>
+      <button data-tab="light" role="tab" aria-selected="false">Світло</button>
+      <button data-tab="text" role="tab" aria-selected="false">Текст</button>
+      <button data-tab="trans" role="tab" aria-selected="false">Переходи</button>
+      <button data-tab="fx" role="tab" aria-selected="false">Ефекти</button>
+    </div>
+    <div id="tabLight" class="hidden">
+      <div class="fxTop small muted">Світло вже вирівняне між кадрами автоматично. Тут можна підкрутити кожен кадр окремо:
+        зміни видно одразу на відео, а у файлі — після «Зробити версію».</div>
+      <div class="fxSection" id="lightCur">
+        <div class="fxTitle"><span class="num" id="lNum"></span> <span id="lNote"></span> <span id="lSrc" class="pill"></span></div>
+        <div class="fxRow2"><span>Яскравість</span><input type="range" id="lB" min="-80" max="80"><span id="lBv" class="mono"></span></div>
+        <div class="fxRow2"><span>Контраст</span><input type="range" id="lC" min="-50" max="50"><span id="lCv" class="mono"></span></div>
+        <div class="fxRow2"><span>Тепло</span><input type="range" id="lT" min="-100" max="100"><span id="lTv" class="mono"></span></div>
+        <div class="row">
+          <button id="lAuto" title="Повернути автоматичний баланс для цього кадру"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 102.2-5.3M4.5 4.5v4.6h4.6"/></svg><span>Авто</span></button>
+          <button id="lCompare" title="Утримуй, щоб побачити як у версії (клавіша B)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path class="f" d="M12 4a8 8 0 010 16z"/></svg><span>Утримуй: було / стане</span></button>
+          <span id="lStatus" class="muted small"></span>
+        </div>
+      </div>
+      <div class="fxSection">
+        <div class="fxTitle">Усі кадри <span class="muted small">— клік, щоб перейти; ☀ яскравість</span></div>
+        <div id="lightList"></div>
+      </div>
+    </div>
+    <div id="tabText" class="hidden">
+      <div class="fxTop">
+        <div class="row"><button id="tAdd" class="primary">+ Додати напис тут</button>
+          <span class="muted small">з'явиться з поточного моменту; тягни його прямо на відео</span></div>
+        <div id="tList"></div>
+        <div id="tBakedNote" class="small hidden"></div>
+      </div>
+      <div id="tEditor" class="hidden">
+        <div class="tBackBar"><button id="tBack" class="ghost"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg><span id="tBackLbl">Усі написи</span></button>
+          <span class="muted small">клік по напису на відео теж вибирає його</span></div>
+        <div class="fxSection">
+          <textarea id="tText" rows="2" placeholder="Напис… (Shift+Enter — новий рядок)"></textarea>
+          <div class="fxTitle">Готові стилі</div>
+          <div class="chips" id="tPresets"></div>
+        </div>
+        <div class="fxSection">
+          <div class="fxTitle">Шрифт</div>
+          <div id="tFonts" class="fontGrid"></div>
+          <div class="row">
+            <button id="tBold" title="Жирний"><b>Ж</b></button>
+            <button id="tItalic" title="Курсив"><i>К</i></button>
+            <button id="tUpper" title="Великими літерами">АА</button>
+            <span class="seg3" id="tAlign"><button data-al="left" title="Ліворуч"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 6.5h15M4.5 10.5h9M4.5 14.5h15M4.5 18.5h9"/></svg></button><button data-al="center" title="По центру"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 6.5h15M7.5 10.5h9M4.5 14.5h15M7.5 18.5h9"/></svg></button><button data-al="right" title="Праворуч"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 6.5h15M10.5 10.5h9M4.5 14.5h15M10.5 18.5h9"/></svg></button></span>
+          </div>
+          <div class="fxRow2"><span>Розмір</span><input type="range" id="tSize" min="20" max="140"><span id="tSizeV" class="mono"></span></div>
+        </div>
+        <div class="fxSection">
+          <div class="fxTitle">Колір тексту</div>
+          <div class="swatches" id="tColors"></div>
+          <div class="fxTitle">Оформлення</div>
+          <div class="seg3" id="tStyle"><button data-st="plain">Без</button><button data-st="outline">Контур</button><button data-st="box">Плашка</button></div>
+          <div id="tBoxRow">
+            <div class="small muted" id="tBoxLbl">Колір плашки</div>
+            <div class="swatches" id="tBoxColors"></div>
+            <div class="fxRow2" id="tBoxOpRow"><span>Прозорість</span><input type="range" id="tBoxOp" min="20" max="100"><span id="tBoxOpV" class="mono"></span></div>
+          </div>
+        </div>
+        <div class="fxSection">
+          <div class="fxTitle"><label class="check"><input type="checkbox" id="shOn"> Тінь</label>
+            <span class="muted small" id="shWhere"></span></div>
+          <div id="shBody">
+            <div class="chips" id="shPresets"></div>
+            <div class="swatches" id="shColors"></div>
+            <div class="fxRow2"><span>Прозорість</span><input type="range" id="shOp" min="5" max="100"><span id="shOpV" class="mono"></span></div>
+            <div class="fxRow2"><span>Розмиття</span><input type="range" id="shBlur" min="0" max="100"><span id="shBlurV" class="mono"></span></div>
+            <div class="fxRow2"><span>Відстань</span><input type="range" id="shDist" min="0" max="40"><span id="shDistV" class="mono"></span></div>
+            <div class="fxRow2"><span>Напрямок</span><input type="range" id="shAng" min="0" max="359"><span id="shAngV" class="mono"></span></div>
+          </div>
+        </div>
+        <div class="fxSection">
+          <div class="fxTitle">Місце і час</div>
+          <div class="row"><button data-pos="0.17">Вгорі</button><button data-pos="0.45">Центр</button><button data-pos="0.68">Внизу</button>
+            <span class="muted small">або тягни на відео</span></div>
+          <div class="row"><button id="tStartHere">Початок тут</button><button id="tEndHere">Кінець тут</button>
+            <label class="small muted">Тривалість <input type="number" id="tDur" step="0.5" min="0.5" class="mono"> с</label></div>
+          <div class="row small"><span id="tTime" class="mono"></span>
+            <label class="check small"><input type="checkbox" id="tFade"> плавна поява</label></div>
+          <div class="row"><button id="tDel" class="danger">Видалити напис</button><span id="tSave" class="muted small"></span></div>
+        </div>
+      </div>
+    </div>
+    <div id="tabTrans" class="hidden">
+    <div class="fxSection" id="trBlock">
+      <div class="fxTitle">Переходи між кадрами</div>
+      <div class="muted small">Перехід ставиться на склейку біля точки відтворення. Ромби на таймлайні — склейки з переходом.</div>
+      <div class="row">
+        <button id="trPrev" class="icon" title="Попередня склейка"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6l-6 6 6 6"/></svg></button>
+        <div id="trCut" class="small"></div>
+        <button id="trNext" class="icon" title="Наступна склейка"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6l6 6-6 6"/></svg></button>
+      </div>
+      <div class="trGrid" id="trTypes"></div>
+      <div class="fxRow2" id="trDurRow"><span>Тривалість</span><input type="range" id="trDur" min="10" max="120" step="5"><span id="trDurV" class="mono"></span></div>
+      <div class="row">
+        <button id="trPlay" class="primary"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M8 5.5v13l10.5-6.5z"/></svg><span>Переглянути перехід</span></button>
+        <button id="trAll" title="Цей самий перехід на всі склейки">На всі склейки</button>
+        <button id="trReset" title="Усі склейки — прямі">Усі прямі</button>
+      </div>
+      <div id="trStatus" class="muted small"></div>
+    </div>
+    </div>
+    <div id="tabFx" class="hidden">
+      <div class="fxTop">
+        <div class="muted small">Ефекти накладаються наживо поверх відео, як прев'ю. Фінальний рендер вийде таким самим:
+          ті самі кольорові таблиці й формули. Подобається — надішли Claude, і він зробить нову версію.</div>
+        <div class="row">
+          <button id="fxCompare" title="Утримуй, щоб побачити без ефектів (клавіша B)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path class="f" d="M12 4a8 8 0 010 16z"/></svg><span>Утримуй: до / після</span></button>
+          <button id="fxReset">Скинути все</button>
+          <span id="fxBaked" class="small"></span>
+        </div>
+      </div>
+      <div class="fxSection"><div class="fxTitle">Готові набори</div><div class="chips" id="fxPresets"></div></div>
+      <div class="fxSection">
+        <div class="fxTitle">Колір <span class="muted small">— один на вибір; мініатюри показують поточний кадр</span></div>
+        <div id="fxLooks" class="lookGrid"></div>
+        <div class="fxSlider hidden" id="lookSlider"><span id="lookName"></span><input type="range" id="lookK" min="0" max="100"><span id="lookKv" class="mono"></span></div>
+      </div>
+      <div class="fxSection"><div class="fxTitle">Світло</div><div id="fxLight"></div></div>
+      <div class="fxSection"><div class="fxTitle">Текстура</div><div id="fxTexture"></div></div>
+      <div class="fxSection"><div class="fxTitle">Рух</div><div id="fxMotion"></div></div>
+      <div class="fxSend">
+        <div id="fxSummary" class="small"></div>
+        <textarea id="fxNote" rows="2" placeholder="Коментар (необов'язково): напр. «світіння тільки на фінальній тарілці»"></textarea>
+        <div class="row">
+          <button id="fxSend" class="primary">Надіслати Claude: зробити версію з цими ефектами</button>
+          <span id="fxStatus" class="muted small"></span>
+        </div>
+      </div>
+    </div>
+    <div id="tabBoard" class="hidden"></div>
+    <div id="tabNotes">
+    <div id="applyStrip" class="applyStrip hidden">
+      <span id="applyText"></span>
+      <button id="applyCopy" title="Скопіювати фразу для чату"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="8.5" y="8.5" width="11" height="11" rx="2"/><path d="M15.5 8.5v-2a2 2 0 00-2-2h-7a2 2 0 00-2 2v7a2 2 0 002 2h2"/></svg><span>Копіювати</span></button>
+    </div>
+    <div class="now" id="now">
+      <div class="nowTitle"><span id="nowNum" class="num"></span> <b id="nowNote"></b></div>
+      <div class="muted small" id="nowSrc"></div>
+      <div class="nowActs">
+        <button id="nowTrim" title="Відкрити цей кадр у редакторі уривка й посунути межі"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg><span>Підрізати кадр</span></button>
+        <button id="nowAlt" title="Інші варіанти цього кадру з матеріалу (вкладка «Кадри»)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 4.5l-3 3 3 3M4.5 7.5h12M16.5 19.5l3-3-3-3M19.5 16.5h-12"/></svg><span>Варіанти</span><b id="nowAltN"></b></button>
+        <button id="openSrc" class="link">увесь кліп →</button>
+      </div>
+    </div>
+
+    <div class="compose">
+      <div class="anchorRow">
+        <span class="muted small">Прив'язка:</span>
+        <div class="seg3" id="anchorMode">
+          <button data-a="segment" class="on">кадр</button>
+          <button data-a="moment">момент</button>
+          <button data-a="general">все відео</button>
+        </div>
+        <span id="anchorLabel" class="small"></span>
+      </div>
+      <textarea id="text" rows="3" placeholder="Що змінити? Напр.: «зроби довше», «візьми момент, де ложка посередині», «заміни на IMG_0123»…  Enter — додати, Shift+Enter — новий рядок"></textarea>
+      <div class="chips" id="chips">
+        <button>прибрати</button><button>довше</button><button>коротше</button>
+        <button>інший момент цього кліпу</button><button>замінити кадр</button>
+        <button>додати кадр після</button><button>поміняти порядок</button><button>наблизити</button><button>подобається ✓</button>
+      </div>
+      <div class="refs" id="refs"></div>
+      <div class="row">
+        <button id="addBtn" class="primary">Додати вказівку (Enter)</button>
+        <span id="addStatus" class="muted small"></span>
+      </div>
+    </div>
+
+    <div class="listHead">
+      <h3>Вказівки</h3>
+      <span id="counts" class="muted small"></span>
+      <span class="spacer"></span>
+      <label class="check small" title="Виконані в останній версії видно завжди"><input type="checkbox" id="showDone"> <span id="showDoneLbl">усі виконані</span></label>
+    </div>
+    <div id="list"></div>
+    <div class="hint muted small">Залиш вказівки й напиши Claude в чаті: <b>«внеси правки»</b>.
+      Він їх застосує, зробить нову версію, і тут з'являться його відповіді.</div>
+    </div>
+  </section>
+</main>
+
+<section id="timelinePane" class="panel">
+  <div class="tlHead">
+    <h2>Таймлайн</h2>
+    <span id="tlInfo" class="muted small mono"></span>
+    <span class="legend small muted" title="Що позначено над кадрами">
+      <span><i class="lg-note"></i>вказівка</span><span><i class="lg-cap"></i>напис</span><span><i class="lg-tr"></i>перехід</span>
+    </span>
+    <span class="spacer"></span>
+    <span class="muted small tlTip">клік — перемотати · ✎ або подвійний клік — змінити уривок</span>
+    <div class="zoomCtl" role="group" aria-label="Масштаб таймлайну">
+      <button id="tlOut" class="icon" title="Дрібніше (−)">−</button>
+      <button id="tlFit" title="Усе відео в ширину (0)">Вмістити</button>
+      <button id="tlIn" class="icon" title="Крупніше (+)">+</button>
+    </div>
+  </div>
+  <div id="tlScroll">
+    <div id="ruler"></div>
+    <div id="tlMarks"></div>
+    <div id="timeline"></div>
+    <div id="tlPlayhead"></div>
+  </div>
+</section>
+
+<div id="keysModal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="keysTitle">
+  <div class="keysBox">
+    <div class="modalHead"><b id="keysTitle">Клавіші й підказки</b><span class="spacer"></span><button id="keysClose" class="icon" title="Закрити (Esc)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button></div>
+    <div class="keysGrid">
+      <section>
+        <h3>Перегляд</h3>
+        <dl>
+          <dt><kbd>Пробіл</kbd></dt><dd>грати / пауза</dd>
+          <dt><kbd>←</kbd> <kbd>→</kbd></dt><dd>на 1/30 с назад / вперед</dd>
+          <dt><kbd>⇧</kbd> + <kbd>←</kbd> <kbd>→</kbd></dt><dd>попередній / наступний кадр монтажу</dd>
+          <dt><kbd>Home</kbd></dt><dd>з початку</dd>
+          <dt><kbd>F</kbd></dt><dd>на весь екран</dd>
+          <dt><kbd>V</kbd></dt><dd>попередня переглянута версія (той самий момент)</dd>
+          <dt><kbd>B</kbd> (утримувати)</dt><dd>як було без змін світла чи ефектів</dd>
+        </dl>
+      </section>
+      <section>
+        <h3>Монтаж</h3>
+        <dl>
+          <dt><kbd>N</kbd> або <kbd>Enter</kbd></dt><dd>написати вказівку</dd>
+          <dt><kbd>+</kbd> <kbd>−</kbd> <kbd>0</kbd></dt><dd>масштаб таймлайну / вмістити</dd>
+          <dt><kbd>M</kbd></dt><dd>показати / сховати матеріал</dd>
+          <dt>✎ на кадрі</dt><dd>змінити уривок кадру (або подвійний клік)</dd>
+          <dt><kbd>Esc</kbd></dt><dd>закрити вікно, вийти з поля</dd>
+        </dl>
+      </section>
+      <section>
+        <h3>Редактор уривка</h3>
+        <dl>
+          <dt><kbd>I</kbd> <kbd>O</kbd></dt><dd>початок / кінець шматка тут</dd>
+          <dt><kbd>+</kbd> <kbd>−</kbd> <kbd>Z</kbd> <kbd>0</kbd></dt><dd>масштаб смужки, до вибраного, увесь кліп</dd>
+          <dt>коліщатко</dt><dd>масштаб смужки; рух убік — гортати</dd>
+        </dl>
+      </section>
+      <section>
+        <h3>Як працює</h3>
+        <p class="small muted">Залиш вказівки (або зміни кадри, світло, написи, переходи) і напиши Claude в чаті
+          <b>«внеси правки»</b>. Свої зміни світла, написів і переходів можна зробити версією самостійно:
+          <b>«Зробити версію»</b>. Крапка біля кнопки означає, що є зміни, яких ще немає у файлі.</p>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div id="modal" class="hidden">
+  <div class="modalBox">
+    <div class="modalHead">
+      <b id="mTitle"></b> <span id="mStage" class="pill"></span>
+      <span class="spacer"></span>
+      <button id="mClose" class="icon" title="Закрити (Esc)"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg></button>
+    </div>
+    <div class="muted small" id="mNote"></div>
+    <div class="modalBody">
+      <div class="mLib" id="mLib">
+        <div class="mLibHead">
+          <div class="searchBox"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l4.5 4.5"/></svg>
+            <input id="mSearch" type="search" placeholder="Інший кліп: крем, кава, IMG_0123…" spellcheck="false"></div>
+          <label class="check small"><input type="checkbox" id="mUnused"> не в монтажі</label>
+        </div>
+        <div id="mLibList"></div>
+      </div>
+      <div class="frame916 small"><video id="mVideo" playsinline controls preload="auto"></video></div>
+      <div class="mSide">
+        <div id="mUsed" class="small"></div>
+        <div class="mTime mono" id="mTime"></div>
+        <div class="fxTitle">Вибрати шматок для відео</div>
+        <div class="mTracks">
+          <div id="mOver" title="Увесь кліп. Рамка — частина, яку видно на смужці: тягни, щоб гортати, клік — перейти туди"><div id="mOverMarks"></div><div id="mOverSel"></div><div id="mOverWin"></div><div id="mOverHead"></div></div>
+          <div id="mTrack"><div id="mStrip"></div><div id="mUsedMarks"></div><div id="mSel"><i class="hl"></i><i class="hr"></i></div><div id="mHead"></div></div>
+          <div class="row mZoom">
+            <button id="mZoomOut" class="zb" title="Дрібніше (−)">−</button>
+            <button id="mZoomIn" class="zb" title="Крупніше (+)">+</button>
+            <button id="mZoomSel" title="Показати вибраний шматок крупно (Z)">До вибраного</button>
+            <button id="mZoomAll" title="Увесь кліп (0)">Увесь кліп</button>
+            <span id="mView" class="mono small"></span>
+          </div>
+        </div>
+        <div class="row">
+          <button id="mSetIn" title="Початок шматка = поточний кадр (I)">[ Початок тут</button>
+          <button id="mSetOut" title="Кінець шматка = поточний кадр (O)">Кінець тут ]</button>
+          <button id="mLoop" title="Програти вибраний шматок по колу"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path class="f" d="M8 5.5v13l10.5-6.5z"/></svg><span>Вибране</span></button>
+        </div>
+        <div id="mRange" class="mono small"></div>
+        <div class="row">
+          <select id="mMode"><option value="after">Вставити після</option><option value="replace">Замінити кадр</option></select>
+          <select id="mWhere"></select>
+        </div>
+        <div class="row">
+          <button id="mAdd" class="primary">＋ Додати у відео</button>
+          <span id="mAddStatus" class="muted small"></span>
+        </div>
+        <button id="mInsert">Згадати у вказівці</button>
+        <div class="muted small">Перетягни рамку на смужці або постав межі кнопками. Коліщатко чи щипок на смужці — масштаб,
+          рух убік — гортати; довгі кліпи відкриваються вже наближеними.
+          «Додати у відео» вносить шматок у монтаж, і він з'явиться після «Зробити версію».
+          «Згадати у вказівці» вставить у текст <span class="mono">[IMG_0123 4.20–5.60 с]</span>.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/i18n.js"></script>
+<script src="/app.js"></script>
+<script src="/studio.js"></script>
+<script src="/board.js"></script>
+</body>
+</html>

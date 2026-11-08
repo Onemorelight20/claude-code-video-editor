@@ -1,0 +1,8 @@
+# Core: rendering, analysis, light balance, effects
+numpy>=1.24
+
+# Also needed on PATH (not pip packages):
+#   ffmpeg and ffprobe (e.g. `brew install ffmpeg`)
+#
+# Optional, for detecting speech in clips (Apple Silicon):
+#   mlx-whisper

@@ -1,0 +1,246 @@
+{
+ "lut_size": 33,
+ "params": {
+  "glow": {
+   "threshold": 0.6,
+   "sigma": 0.02
+  },
+  "diffusion": {
+   "sigma": 0.007
+  },
+  "vignette": {
+   "inner": 0.45,
+   "outer": 1.05
+  },
+  "grain": {
+   "amp": 16.0
+  },
+  "sharpen": {
+   "amount": 0.7
+  },
+  "leak": {
+   "color": [
+    1.0,
+    0.58,
+    0.28
+   ]
+  },
+  "pushin": {
+   "zoom": 0.12
+  }
+ },
+ "looks": [
+  {
+   "id": "appetizing",
+   "name": "Апетитний",
+   "desc": "Соковитіші кольори їжі, трохи більше контрасту й тепла",
+   "name_en": "Appetizing",
+   "desc_en": "Juicier food colors, a little more contrast and warmth",
+   "lut": "luts/appetizing.png",
+   "default": 0.6
+  },
+  {
+   "id": "warm",
+   "name": "Теплий",
+   "desc": "Легке тепло без зміни яскравості, денне світло стає м'якшим",
+   "name_en": "Warm",
+   "desc_en": "Gentle warmth without changing brightness; daylight gets softer",
+   "lut": "luts/warm.png",
+   "default": 0.6
+  },
+  {
+   "id": "golden",
+   "name": "Золота година",
+   "desc": "Теплі золоті світлі ділянки, ніби вечірнє сонце",
+   "name_en": "Golden hour",
+   "desc_en": "Warm golden highlights, like the evening sun",
+   "lut": "luts/golden.png",
+   "default": 0.6
+  },
+  {
+   "id": "cream",
+   "name": "Кремовий",
+   "desc": "Ніжні пастельні кольори, підняті тіні, кремові білі",
+   "name_en": "Creamy",
+   "desc_en": "Soft pastel colors, lifted shadows, creamy whites",
+   "lut": "luts/cream.png",
+   "default": 0.6
+  },
+  {
+   "id": "portra",
+   "name": "Плівка Portra",
+   "desc": "М'яка плівкова гама: теплі тони, спокійні зелені, легкий матовий низ",
+   "name_en": "Portra film",
+   "desc_en": "Soft film palette: warm tones, calm greens, slightly matte blacks",
+   "lut": "luts/portra.png",
+   "default": 0.6
+  },
+  {
+   "id": "vintage",
+   "name": "Вінтаж",
+   "desc": "Вицвіла тепла плівка 70-х",
+   "name_en": "Vintage",
+   "desc_en": "Faded warm 70s film",
+   "lut": "luts/vintage.png",
+   "default": 0.6
+  },
+  {
+   "id": "fresh",
+   "name": "Світлий свіжий",
+   "desc": "Світліше й чистіше, нейтральні білі",
+   "name_en": "Light and fresh",
+   "desc_en": "Brighter and cleaner, neutral whites",
+   "lut": "luts/fresh.png",
+   "default": 0.6
+  },
+  {
+   "id": "evening",
+   "name": "Затишний вечір",
+   "desc": "Темніше й тепліше, ніби під теплою лампою",
+   "name_en": "Cozy evening",
+   "desc_en": "Darker and warmer, as if under a warm lamp",
+   "lut": "luts/evening.png",
+   "default": 0.6
+  }
+ ],
+ "effects": [
+  {
+   "id": "glow",
+   "cat": "light",
+   "name": "М'яке світіння",
+   "desc": "Світлі місця м'яко сяють, затишна «мрійливість»",
+   "name_en": "Soft glow",
+   "desc_en": "Highlights glow softly for a cozy, dreamy look",
+   "default": 0.35
+  },
+  {
+   "id": "diffusion",
+   "cat": "light",
+   "name": "Дифузія",
+   "desc": "Як фільтр Pro-Mist: м'якші світлі, легкий серпанок",
+   "name_en": "Diffusion",
+   "desc_en": "Like a Pro-Mist filter: softer highlights, a light haze",
+   "default": 0.4
+  },
+  {
+   "id": "leak",
+   "cat": "light",
+   "name": "Відблиски світла",
+   "desc": "Теплі світлові плями повільно пливуть з кутів кадру",
+   "name_en": "Light leaks",
+   "desc_en": "Warm patches of light drift slowly in from the corners",
+   "default": 0.35
+  },
+  {
+   "id": "vignette",
+   "cat": "light",
+   "name": "Віньєтка",
+   "desc": "Темніші краї, погляд тягне до центру",
+   "name_en": "Vignette",
+   "desc_en": "Darker edges draw the eye to the center",
+   "default": 0.35
+  },
+  {
+   "id": "grain",
+   "cat": "texture",
+   "name": "Плівкове зерно",
+   "desc": "Легке живе зерно, як на плівці",
+   "name_en": "Film grain",
+   "desc_en": "Light, lively grain, like on film",
+   "default": 0.3
+  },
+  {
+   "id": "sharpen",
+   "cat": "texture",
+   "name": "Чіткість",
+   "desc": "Чіткіші текстури їжі",
+   "name_en": "Clarity",
+   "desc_en": "Crisper food textures",
+   "default": 0.35
+  },
+  {
+   "id": "pushin",
+   "cat": "motion",
+   "name": "Повільний наїзд",
+   "desc": "Камера плавно наближається протягом кадру",
+   "name_en": "Slow push-in",
+   "desc_en": "The camera moves in smoothly over the shot",
+   "default": 0.5
+  }
+ ],
+ "presets": [
+  {
+   "id": "none",
+   "name": "Без ефектів",
+   "name_en": "No effects",
+   "fx": {}
+  },
+  {
+   "id": "cozy",
+   "name": "Затишно",
+   "name_en": "Cozy",
+   "fx": {
+    "look": {
+     "id": "golden",
+     "strength": 0.5
+    },
+    "glow": 0.25,
+    "vignette": 0.3,
+    "grain": 0.2
+   }
+  },
+  {
+   "id": "tasty",
+   "name": "Апетитно",
+   "name_en": "Tasty",
+   "fx": {
+    "look": {
+     "id": "appetizing",
+     "strength": 0.6
+    },
+    "sharpen": 0.35,
+    "vignette": 0.15
+   }
+  },
+  {
+   "id": "dreamy",
+   "name": "Мрійливо",
+   "name_en": "Dreamy",
+   "fx": {
+    "look": {
+     "id": "cream",
+     "strength": 0.5
+    },
+    "diffusion": 0.45,
+    "leak": 0.3
+   }
+  },
+  {
+   "id": "film",
+   "name": "Плівка",
+   "name_en": "Film",
+   "fx": {
+    "look": {
+     "id": "portra",
+     "strength": 0.7
+    },
+    "grain": 0.4,
+    "vignette": 0.25
+   }
+  },
+  {
+   "id": "evening",
+   "name": "Вечір",
+   "name_en": "Evening",
+   "fx": {
+    "look": {
+     "id": "evening",
+     "strength": 0.6
+    },
+    "glow": 0.3,
+    "leak": 0.25,
+    "vignette": 0.35
+   }
+  }
+ ]
+}
