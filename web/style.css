@@ -741,3 +741,16 @@ body { font-size: 13px; }
 .langSw button:hover { color: var(--text); }
 .langSw button.on { color: var(--text); }
 html[lang="en"] .lrow.user .nt::after { content: " · manual"; }
+
+/* ---------- welcome screen: no episodes yet ---------- */
+body.empty main, body.empty #timelinePane, body.empty #browserPane, body.empty .hgroup, body.empty #versionNote,
+body.empty #mkVersion, body.empty .dl, body.empty #libToggle, body.empty #mkStatus { display: none !important; }
+#emptyState { grid-column: 1 / -1; grid-row: 2 / -1; display: flex; align-items: center; justify-content: center; padding: 32px 16px;
+  background: var(--bg); }
+#emptyState.hidden { display: none; }
+.emptyBox { max-width: 640px; display: flex; flex-direction: column; gap: 12px; }
+.emptyBox h1 { margin: 0 0 4px; font: 600 24px/1.25 var(--serif); }
+.emptyBox p { margin: 0; color: var(--text-2); line-height: 1.55; }
+.emptyBox pre { margin: 0; padding: 10px 12px; overflow-x: auto; background: var(--viewer); border: 1px solid var(--line-soft); border-radius: 8px; }
+.emptyBox code { font: 12px/1.5 var(--mono); color: var(--text); white-space: pre-wrap; }
+.emptyBox button { align-self: flex-start; margin-top: 4px; }

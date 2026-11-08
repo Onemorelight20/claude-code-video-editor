@@ -51,6 +51,17 @@ const EN = {
   "{n}с": "{n}s",
   "МБ": "MB",
 
+  // ---------- welcome screen (no episodes yet)
+  "Ще немає жодного відео": "No videos yet",
+  "Створи перше: поклади кліпи в теку або zip і запусти в терміналі, у теці проєкту:":
+    "Create the first one: put your clips in a folder or a zip and run this in a terminal, in the project folder:",
+  "Потім онови цю сторінку й попроси Claude Code в чаті:": "Then reload this page and ask Claude Code in chat:",
+  "Змонтуй епізод 2026-03-14-pancakes: до хвилини, готова страва як хук, далі кроки рецепта.":
+    "Cut the episode 2026-03-14-pancakes: under a minute, the finished dish as the hook, then the recipe steps.",
+  "Відзнятий матеріал лишається на твоєму комп'ютері. Докладніше — README.md і docs/ui.md.":
+    "Your footage stays on your computer. More in README.md and docs/ui.md.",
+  "Оновити": "Reload",
+
   // ---------- footage panel
   "Матеріал": "Footage",
   "{n} кліпів": ["{n} clip", "{n} clips"],

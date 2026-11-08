@@ -53,6 +53,18 @@
   <div id="browser"></div>
 </aside>
 
+<section id="emptyState" class="hidden">
+  <div class="emptyBox">
+    <h1>Ще немає жодного відео</h1>
+    <p>Створи перше: поклади кліпи в теку або zip і запусти в терміналі, у теці проєкту:</p>
+    <pre><code>python3 tools/new_episode.py 2026-03-14-pancakes ~/Downloads/pancakes.zip</code></pre>
+    <p>Потім онови цю сторінку й попроси Claude Code в чаті:</p>
+    <pre><code>Змонтуй епізод 2026-03-14-pancakes: до хвилини, готова страва як хук, далі кроки рецепта.</code></pre>
+    <p class="muted small">Відзнятий матеріал лишається на твоєму комп'ютері. Докладніше — README.md і docs/ui.md.</p>
+    <button id="emptyReload" class="primary">Оновити</button>
+  </div>
+</section>
+
 <main>
   <section id="playerPane">
     <div class="players">

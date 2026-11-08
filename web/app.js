@@ -115,6 +115,8 @@ async function init() {
   const sel = $("#episode");
   sel.innerHTML = eps.map((e) => `<option value="${e.name}">${epLabel(e)}</option>`).join("");
   S.epTitles = Object.fromEntries(eps.map((e) => [e.name, e.title || e.name]));
+  document.body.classList.toggle("empty", !eps.length);   // fresh clone: welcome screen instead of an empty editor
+  $("#emptyState").classList.toggle("hidden", !!eps.length);
   const last = store.get("ep");
   const name = eps.some((e) => e.name === last) ? last : eps.length && eps[eps.length - 1].name;
   if (name) { sel.value = name; fitSelect(sel); await loadEpisode(name); }
@@ -757,6 +759,7 @@ $("#mInsert").onclick = () => {
 // ---------- header ----------
 $("#version").onchange = (e) => setVersion(e.target.value);
 $("#newVersionBtn").onclick = () => setVersion(S.versions[0].file);
+$("#emptyReload").onclick = () => location.reload();
 $("#newVersionX").onclick = () => $("#newVersion").classList.add("hidden");
 
 // player full screen (F); captions / effects overlays stay on, they are inside #frame
